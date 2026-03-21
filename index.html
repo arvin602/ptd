@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PTD — Prem Tutoring Database</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --teal:      #0d9488;
+  --teal-dk:   #0f766e;
+  --teal-lt:   #2dd4bf;
+  --teal-pale: #ccfbf1;
+  --teal-mist: #f0fdfa;
+  --ink:       #0f1f1e;
+  --ink-2:     #1e3a38;
+  --slate:     #5c7a78;
+  --stone:     #d1e8e6;
+  --cream:     #f7fffe;
+  --white:     #ffffff;
+  --border:    #cde8e5;
+  --radius:    10px;
+  --shadow:    0 2px 12px rgba(13,148,136,.10);
+  --shadow-lg: 0 8px 40px rgba(13,148,136,.15);
+  --math-bg:#eff6ff;--math-fg:#2563eb;
+  --english-bg:#fdf4ff;--english-fg:#9333ea;
+  --science-bg:#f0fdf4;--science-fg:#16a34a;
+  --history-bg:#fff7ed;--history-fg:#ea580c;
+  --french-bg:#fff1f2;--french-fg:#e11d48;
+  --geo-bg:#fefce8;--geo-fg:#ca8a04;
+  --general-bg:#f1f5f9;--general-fg:#475569;
+}
+html,body{height:100%;font-family:'Sora',sans-serif;background:var(--cream);color:var(--ink);}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--stone);border-radius:10px}
+.page{display:none}.page.active{display:block}
+
+/* ── LOGIN ── */
+#login-page.active{display:flex;min-height:100vh}
+.login-panel{width:44%;background:var(--teal-dk);display:flex;flex-direction:column;justify-content:space-between;padding:48px 56px;position:relative;overflow:hidden}
+.login-panel::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at -10% 110%,rgba(45,212,191,.25) 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 110% 10%,rgba(45,212,191,.12) 0%,transparent 60%)}
+.login-panel-top,.login-panel-bottom{position:relative;z-index:1}
+.ptd-wordmark{font-family:'Lora',serif;font-size:32px;font-weight:600;color:var(--white);letter-spacing:-1px;margin-bottom:4px}
+.ptd-wordmark span{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal-lt);margin-left:3px;vertical-align:middle;position:relative;top:-3px}
+.ptd-sub{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:64px}
+.login-panel h1{font-family:'Lora',serif;font-size:clamp(32px,3.5vw,52px);font-weight:600;color:var(--white);line-height:1.15;margin-bottom:18px}
+.login-panel h1 em{font-style:italic;color:var(--teal-lt)}
+.login-panel .tagline{font-size:15px;color:rgba(255,255,255,.5);line-height:1.75;max-width:340px;margin-bottom:48px}
+.feature-chips{display:flex;flex-direction:column;gap:10px}
+.chip{display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,.7)}
+.chip-icon{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.login-testimonial{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:18px 20px}
+.login-testimonial p{font-family:'Lora',serif;font-style:italic;font-size:14px;color:rgba(255,255,255,.7);line-height:1.65;margin-bottom:10px}
+.login-testimonial cite{font-size:12px;color:var(--teal-lt);font-style:normal;font-weight:500}
+.login-form-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:48px 40px;background:var(--cream)}
+.login-form-inner{width:100%;max-width:380px}
+.form-eyebrow{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);margin-bottom:10px}
+.login-form-inner h2{font-family:'Lora',serif;font-size:30px;font-weight:600;color:var(--ink);margin-bottom:6px}
+.login-form-inner .form-desc{font-size:14px;color:var(--slate);margin-bottom:36px;line-height:1.6}
+.role-selector{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px}
+.role-btn{padding:12px 8px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--white);cursor:pointer;text-align:center;transition:all .18s;font-family:'Sora',sans-serif}
+.role-btn .role-icon{font-size:20px;display:block;margin-bottom:5px}
+.role-btn .role-label{font-size:12px;font-weight:500;color:var(--slate)}
+.role-btn.selected{border-color:var(--teal);background:var(--teal-mist)}
+.role-btn.selected .role-label{color:var(--teal-dk)}
+label.field-label{display:block;font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--slate);margin-bottom:7px}
+.field-wrap{position:relative;margin-bottom:20px}
+.field-wrap input{width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'Sora',sans-serif;font-size:14px;color:var(--ink);background:var(--white);outline:none;transition:border-color .18s,box-shadow .18s}
+.field-wrap input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,148,136,.10)}
+.field-wrap input::placeholder{color:#aabfbd}
+.error-bar{display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;font-size:13px;color:#dc2626;margin-bottom:16px}
+.error-bar.show{display:block}
+.btn-enter{width:100%;padding:14px;background:var(--teal);color:var(--white);border:none;border-radius:var(--radius);font-family:'Sora',sans-serif;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:.02em;transition:background .18s,box-shadow .18s,transform .1s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-enter:hover{background:var(--teal-dk);box-shadow:var(--shadow-lg)}
+.btn-enter:active{transform:scale(.98)}
+.login-note{margin-top:20px;font-size:12px;color:var(--slate);text-align:center;line-height:1.6}
+
+/* ── APP SHELL ── */
+#app-page.active{display:flex;flex-direction:column;min-height:100vh}
+.app-body{display:flex;flex:1;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:240px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;height:calc(100vh - 60px);position:sticky;top:60px;overflow-y:auto}
+.sidebar-section{padding:20px 16px 8px}
+.sidebar-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--slate);padding:0 8px;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;font-size:13.5px;font-weight:500;color:var(--slate);cursor:pointer;transition:all .15s;user-select:none;border:none;background:none;width:100%;text-align:left;font-family:'Sora',sans-serif}
+.nav-item:hover{background:var(--teal-mist);color:var(--teal-dk)}
+.nav-item.active{background:var(--teal-pale);color:var(--teal-dk);font-weight:600}
+.nav-item .ni-icon{font-size:15px;width:20px;text-align:center}
+.nav-count{margin-left:auto;background:var(--stone);color:var(--teal-dk);font-size:11px;font-weight:700;padding:1px 7px;border-radius:100px}
+.nav-item.active .nav-count{background:var(--teal);color:white}
+.sidebar-divider{height:1px;background:var(--border);margin:8px 16px}
+.subject-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sidebar-bottom{margin-top:auto;padding:12px 16px 20px;border-top:1px solid var(--border)}
+.user-chip{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;background:var(--teal-mist);margin-bottom:8px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--teal);color:white;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.user-info .user-role{font-size:11px;font-weight:600;color:var(--teal-dk)}
+.user-info .user-name{font-size:12px;color:var(--slate)}
+.btn-signout{width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;background:none;font-family:'Sora',sans-serif;font-size:13px;color:var(--slate);cursor:pointer;transition:all .15s}
+.btn-signout:hover{background:#fff1f2;border-color:#fca5a5;color:#dc2626}
+
+/* ── TOPBAR ── */
+.topbar{height:60px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:200}
+.topbar-logo{font-family:'Lora',serif;font-size:20px;font-weight:600;color:var(--teal-dk);letter-spacing:-.5px;margin-right:8px;white-space:nowrap}
+.topbar-logo span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--teal-lt);margin-left:2px;vertical-align:middle;position:relative;top:-2px}
+.topbar-search{flex:1;max-width:480px;position:relative}
+.topbar-search input{width:100%;padding:9px 16px 9px 38px;border:1.5px solid var(--border);border-radius:8px;font-family:'Sora',sans-serif;font-size:13.5px;color:var(--ink);background:var(--cream);outline:none;transition:border-color .18s,box-shadow .18s}
+.topbar-search input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,148,136,.09);background:var(--white)}
+.topbar-search input::placeholder{color:#9bbab8}
+.search-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#9bbab8;font-size:14px;pointer-events:none}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.topbar-role-badge{display:flex;align-items:center;gap:6px;background:var(--teal-mist);border:1px solid var(--stone);border-radius:100px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--teal-dk)}
+.role-indicator{width:7px;height:7px;border-radius:50%;background:var(--teal)}
+
+/* ── MAIN ── */
+.main-content{flex:1;overflow-y:auto;height:calc(100vh - 60px)}
+
+/* ── LOADING STATE ── */
+.loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;gap:16px}
+.spinner{width:36px;height:36px;border:3px solid var(--stone);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-state p{font-size:14px;color:var(--slate)}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:20px 28px 0}
+.stat-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 18px;display:flex;align-items:center;gap:14px}
+.stat-icon{width:40px;height:40px;border-radius:10px;background:var(--teal-mist);border:1px solid var(--stone);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.stat-text .stat-val{font-size:22px;font-weight:700;color:var(--ink);line-height:1;margin-bottom:2px}
+.stat-text .stat-label{font-size:12px;color:var(--slate)}
+
+/* ── VIEW HEADER ── */
+.view-header{padding:28px 28px 0;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.view-header-left h2{font-family:'Lora',serif;font-size:26px;font-weight:600;color:var(--ink);margin-bottom:3px}
+.view-header-left p{font-size:13px;color:var(--slate)}
+.view-header-right{display:flex;gap:8px;align-items:center}
+.view-toggle{display:flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;background:var(--white)}
+.vt-btn{padding:7px 12px;font-size:14px;cursor:pointer;background:none;border:none;color:var(--slate);transition:all .15s;font-family:'Sora',sans-serif}
+.vt-btn.active{background:var(--teal);color:white}
+.sort-select{padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Sora',sans-serif;font-size:13px;color:var(--ink);background:var(--white);cursor:pointer;outline:none}
+
+/* ── FILTER BAR ── */
+.filter-bar{padding:16px 28px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--border)}
+.filter-bar-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);margin-right:4px}
+.pill{padding:6px 14px;border-radius:100px;border:1.5px solid var(--border);font-size:12.5px;font-weight:500;color:var(--slate);background:var(--white);cursor:pointer;transition:all .15s;font-family:'Sora',sans-serif}
+.pill:hover{border-color:var(--teal);color:var(--teal-dk)}
+.pill.active{background:var(--teal);border-color:var(--teal);color:var(--white)}
+.grade-select{padding:6px 12px;border:1.5px solid var(--border);border-radius:100px;font-family:'Sora',sans-serif;font-size:12.5px;color:var(--slate);background:var(--white);cursor:pointer;outline:none}
+.result-info{margin-left:auto;font-size:12px;color:var(--slate);white-space:nowrap}
+.result-info strong{color:var(--ink)}
+
+/* ── GRID ── */
+.worksheet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px;padding:20px 28px 48px}
+
+/* ── LIST ── */
+.worksheet-list{display:flex;flex-direction:column;padding:20px 28px 48px;gap:0}
+.list-header{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 120px;gap:12px;padding:8px 16px;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--slate);border-bottom:2px solid var(--border);margin-bottom:4px}
+.list-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 120px;gap:12px;align-items:center;padding:12px 16px;border-radius:8px;cursor:pointer;transition:background .13s;border-bottom:1px solid var(--border)}
+.list-row:hover{background:var(--teal-mist)}
+.list-row:last-child{border-bottom:none}
+.list-title-cell{display:flex;align-items:center;gap:10px}
+.list-emoji{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.list-title{font-size:14px;font-weight:600;color:var(--ink)}
+.list-topic{font-size:12px;color:var(--slate)}
+.list-badge{display:inline-flex;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600}
+.list-grade,.list-pages{font-size:13px;color:var(--slate)}
+.list-actions{display:flex;gap:6px}
+
+/* ── CARDS ── */
+.ws-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .18s,transform .18s,border-color .18s;cursor:pointer}
+.ws-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);border-color:var(--teal-lt)}
+.card-accent{height:4px;width:100%}
+.card-subject-tag{display:inline-flex;padding:3px 10px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.card-body{padding:16px 18px;flex:1;display:flex;flex-direction:column}
+.card-title{font-family:'Lora',serif;font-size:17px;font-weight:600;color:var(--ink);line-height:1.3;margin-bottom:6px}
+.card-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;flex:1}
+.meta-tag{font-size:11px;color:var(--slate);background:var(--cream);border:1px solid var(--border);border-radius:4px;padding:2px 7px}
+.card-actions{display:flex;gap:7px}
+.btn-sm{flex:1;padding:8px 10px;border-radius:7px;font-family:'Sora',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px;border:none}
+.btn-ghost{background:var(--cream);color:var(--slate)}
+.btn-ghost:hover{background:var(--teal-mist);color:var(--teal-dk)}
+.btn-teal{background:var(--teal);color:var(--white)}
+.btn-teal:hover{background:var(--teal-dk)}
+
+/* ── EMPTY ── */
+.empty-state{grid-column:1/-1;text-align:center;padding:80px 20px}
+.empty-state .es-icon{font-size:52px;margin-bottom:16px}
+.empty-state h3{font-family:'Lora',serif;font-size:24px;color:var(--ink-2);margin-bottom:8px}
+.empty-state p{font-size:14px;color:var(--slate)}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(15,30,30,.55);backdrop-filter:blur(5px);z-index:500;align-items:center;justify-content:center;padding:24px}
+.modal-bg.open{display:flex}
+.modal{background:var(--white);border-radius:14px;width:100%;max-width:660px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 32px 80px rgba(0,0,0,.22);animation:mIn .2s ease}
+@keyframes mIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+.modal-banner{height:6px;width:100%}
+.modal-close-btn{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:var(--white);color:var(--slate);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.modal-close-btn:hover{background:var(--cream);color:var(--ink)}
+.modal-header-info{padding:18px 24px 16px;border-bottom:1px solid var(--border);position:relative}
+.modal-subject-tag{display:inline-flex;padding:3px 10px;border-radius:100px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.modal-title{font-family:'Lora',serif;font-size:24px;font-weight:600;color:var(--ink);line-height:1.25}
+.modal-body{padding:20px 24px;overflow-y:auto;flex:1}
+.modal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.info-box{background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.info-box label{display:block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-bottom:4px}
+.info-box span{font-size:14px;font-weight:600;color:var(--ink)}
+.modal-desc{font-size:13.5px;line-height:1.75;color:var(--slate);margin-bottom:18px}
+.tutor-notes{background:var(--teal-mist);border:1.5px solid var(--stone);border-radius:10px;padding:14px 16px;margin-bottom:20px}
+.tutor-notes-header{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--teal-dk);margin-bottom:8px}
+.tutor-notes p{font-size:13px;color:var(--teal-dk);line-height:1.6}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px}
+.modal-footer .btn-sm{flex:1;padding:12px;font-size:13px}
+
+/* subject colour classes */
+.sc-math{background:var(--math-bg);color:var(--math-fg)}
+.sc-english{background:var(--english-bg);color:var(--english-fg)}
+.sc-science{background:var(--science-bg);color:var(--science-fg)}
+.sc-history{background:var(--history-bg);color:var(--history-fg)}
+.sc-french{background:var(--french-bg);color:var(--french-fg)}
+.sc-geo{background:var(--geo-bg);color:var(--geo-fg)}
+.sc-general{background:var(--general-bg);color:var(--general-fg)}
+
+/* ── UPLOAD PANEL ── */
+.upload-panel{padding:28px}
+.upload-form{max-width:680px}
+.up-section{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px}
+.up-section-title{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal-dk);margin-bottom:16px}
+.up-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.up-field{display:flex;flex-direction:column;gap:6px}
+.up-field.full{grid-column:1/-1}
+.up-field label{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--slate)}
+.up-field input,.up-field select,.up-field textarea{padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'Sora',sans-serif;font-size:13.5px;color:var(--ink);background:var(--cream);outline:none;transition:border-color .18s,box-shadow .18s}
+.up-field input:focus,.up-field select:focus,.up-field textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,148,136,.09);background:var(--white)}
+.up-field textarea{resize:vertical;min-height:80px}
+.drop-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:40px 24px;text-align:center;cursor:pointer;transition:all .18s;background:var(--cream);position:relative}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--teal);background:var(--teal-mist)}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-icon{font-size:36px;margin-bottom:10px}
+.drop-label{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.drop-sub{font-size:12px;color:var(--slate)}
+.drop-chosen{font-size:13px;color:var(--teal-dk);font-weight:600;margin-top:10px;display:none}
+.up-actions{display:flex;gap:10px;margin-top:4px}
+.btn-upload{padding:13px 28px;background:var(--teal);color:var(--white);border:none;border-radius:var(--radius);font-family:'Sora',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:background .18s,box-shadow .18s;display:flex;align-items:center;gap:8px}
+.btn-upload:hover{background:var(--teal-dk);box-shadow:var(--shadow-lg)}
+.btn-upload:disabled{background:var(--slate);cursor:not-allowed;box-shadow:none}
+.btn-upload-ghost{padding:13px 20px;background:none;color:var(--slate);border:1.5px solid var(--border);border-radius:var(--radius);font-family:'Sora',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .18s}
+.btn-upload-ghost:hover{border-color:var(--teal);color:var(--teal-dk)}
+.upload-success{display:none;background:var(--teal-mist);border:1.5px solid var(--stone);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;font-size:14px;color:var(--teal-dk);font-weight:500;align-items:center;gap:10px}
+.upload-success.show{display:flex}
+.upload-error{display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;font-size:13px;color:#dc2626}
+.upload-error.show{display:block}
+.progress-bar-wrap{display:none;margin-top:12px;background:var(--stone);border-radius:100px;height:6px;overflow:hidden}
+.progress-bar-wrap.show{display:block}
+.progress-bar{height:100%;background:var(--teal);border-radius:100px;transition:width .3s ease;width:0%}
+
+@media(max-width:900px){.login-panel{display:none}.sidebar{display:none}.stats-row{grid-template-columns:1fr 1fr}.modal-grid{grid-template-columns:1fr 1fr}.list-header,.list-row{grid-template-columns:2fr 1fr 90px}.list-header .lh-grade,.list-header .lh-pages,.list-row .lr-grade,.list-row .lr-pages{display:none}.up-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-page" class="page active">
+  <div class="login-panel">
+    <div class="login-panel-top">
+      <div class="ptd-wordmark">PTD<span></span></div>
+      <div class="ptd-sub">Prem Tutoring Database</div>
+      <h1>Every worksheet.<br><em>Instantly</em> accessible.</h1>
+      <p class="tagline">A centralised resource library for tutors and students — organised, searchable, and always up to date.</p>
+      <div class="feature-chips">
+        <div class="chip"><div class="chip-icon">🗂️</div> Browse by subject, grade &amp; topic</div>
+        <div class="chip"><div class="chip-icon">🔍</div> Full-text search across all materials</div>
+        <div class="chip"><div class="chip-icon">⬇️</div> One-click PDF preview &amp; download</div>
+        <div class="chip"><div class="chip-icon">☁️</div> Cloud storage — always up to date</div>
+      </div>
+    </div>
+    <div class="login-panel-bottom">
+      <div class="login-testimonial">
+        <p>"Having all our worksheets in one place has saved me hours every week."</p>
+        <cite>— Prem Tutoring instructor</cite>
+      </div>
+    </div>
+  </div>
+  <div class="login-form-wrap">
+    <div class="login-form-inner">
+      <div class="form-eyebrow">Welcome back</div>
+      <h2>Sign in to PTD</h2>
+      <p class="form-desc">Select your role and enter your access code to continue.</p>
+      <div class="role-selector">
+        <button class="role-btn selected" onclick="selectRole(this,'Student')"><span class="role-icon">🎓</span><span class="role-label">Student</span></button>
+        <button class="role-btn" onclick="selectRole(this,'Tutor')"><span class="role-icon">📚</span><span class="role-label">Tutor</span></button>
+      </div>
+      <label class="field-label">Access Code</label>
+      <div class="field-wrap">
+        <input type="password" id="passcode-input" placeholder="Enter your passcode…" autocomplete="off">
+      </div>
+      <div class="error-bar" id="error-bar">Incorrect access code. Please try again.</div>
+      <button class="btn-enter" onclick="attemptLogin()">Enter PTD <span>→</span></button>
+      <div class="login-note">Don't have a code? Contact <strong>Prem Tutoring</strong> to get access.</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-page" class="page">
+  <div class="topbar">
+    <div class="topbar-logo">PTD<span></span></div>
+    <div class="topbar-search">
+      <span class="search-ico">🔍</span>
+      <input type="text" id="search-input" placeholder="Search worksheets, topics, grades…" oninput="renderView()">
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-role-badge"><div class="role-indicator"></div><span id="role-badge-label">Student</span></div>
+    </div>
+  </div>
+  <div class="app-body">
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Library</div>
+        <button class="nav-item active" onclick="setNavView('all',this)"><span class="ni-icon">📂</span> All Worksheets <span class="nav-count" id="nc-all">—</span></button>
+        <button class="nav-item" onclick="setNavView('recent',this)"><span class="ni-icon">🕐</span> Recent Additions</button>
+        <button class="nav-item" id="upload-nav-btn" onclick="setNavView('upload',this)" style="display:none"><span class="ni-icon">⬆️</span> Upload Worksheet</button>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Subjects</div>
+        <div id="subject-nav"></div>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Grade Level</div>
+        <div id="grade-nav"></div>
+      </div>
+      <div class="sidebar-bottom">
+        <div class="user-chip">
+          <div class="user-avatar" id="user-avatar">S</div>
+          <div class="user-info">
+            <div class="user-role" id="user-role-display">Student</div>
+            <div class="user-name">Prem Tutoring</div>
+          </div>
+        </div>
+        <button class="btn-signout" onclick="logout()">Sign out</button>
+      </div>
+    </div>
+    <div class="main-content">
+      <div class="stats-row" id="stats-row" style="display:none">
+        <div class="stat-card"><div class="stat-icon">📄</div><div class="stat-text"><div class="stat-val" id="stat-total">—</div><div class="stat-label">Total worksheets</div></div></div>
+        <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-text"><div class="stat-val" id="stat-subjects">—</div><div class="stat-label">Subjects covered</div></div></div>
+        <div class="stat-card"><div class="stat-icon">🎓</div><div class="stat-text"><div class="stat-val" id="stat-grades">—</div><div class="stat-label">Grade levels</div></div></div>
+        <div class="stat-card"><div class="stat-icon">🆕</div><div class="stat-text"><div class="stat-val" id="stat-new">—</div><div class="stat-label">Added this month</div></div></div>
+      </div>
+      <div class="view-header">
+        <div class="view-header-left">
+          <h2 id="view-title">All Worksheets</h2>
+          <p id="view-subtitle">Browse the full PTD library</p>
+        </div>
+        <div class="view-header-right" id="view-controls">
+          <div class="view-toggle">
+            <button class="vt-btn active" id="vt-grid" onclick="setViewMode('grid')">⊞</button>
+            <button class="vt-btn" id="vt-list" onclick="setViewMode('list')">☰</button>
+          </div>
+          <select class="sort-select" id="sort-select" onchange="renderView()">
+            <option value="newest">Newest first</option>
+            <option value="az">A → Z</option>
+            <option value="za">Z → A</option>
+            <option value="pages-asc">Fewest pages</option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-bar" id="filter-bar">
+        <span class="filter-bar-label">Subject:</span>
+        <div id="subject-pills"></div>
+        <select class="grade-select" id="grade-filter" onchange="renderView()"><option value="All">All grades</option></select>
+        <span class="result-info" id="result-info"></span>
+      </div>
+      <div id="content-area"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="handleModalBgClick(event)">
+  <div class="modal">
+    <div class="modal-banner" id="modal-banner"></div>
+    <div class="modal-header-info">
+      <button class="modal-close-btn" onclick="closeModal()">✕</button>
+      <div class="modal-subject-tag" id="modal-stag"></div>
+      <div class="modal-title" id="modal-title"></div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="info-box"><label>Grade</label><span id="mi-grade"></span></div>
+        <div class="info-box"><label>Pages</label><span id="mi-pages"></span></div>
+        <div class="info-box"><label>Added</label><span id="mi-date"></span></div>
+        <div class="info-box"><label>Topic</label><span id="mi-topic"></span></div>
+        <div class="info-box"><label>Curriculum</label><span id="mi-curriculum"></span></div>
+        <div class="info-box"><label>Difficulty</label><span id="mi-diff"></span></div>
+      </div>
+      <p class="modal-desc" id="mi-desc"></p>
+      <div class="tutor-notes" id="tutor-notes-block">
+        <div class="tutor-notes-header">📌 Tutor Notes</div>
+        <p id="mi-notes"></p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-ghost" style="border:1.5px solid var(--border)" id="modal-preview-btn">👁 Preview PDF</button>
+      <button class="btn-sm btn-teal" id="modal-download-btn">⬇ Download PDF</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══ SUPABASE CONFIG ══ */
+const SUPABASE_URL  = 'https://zpljfpfajhykjdglktil.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwbGpmcGZhamh5a2pkZ2xrdGlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMjYwODQsImV4cCI6MjA4OTcwMjA4NH0.rFIiKNagw3qXQ1Tq4niYPhLuGyzU7ayFkC_MtpYrZzo';
+const BUCKET       = 'worksheets';
+const PASSCODES    = {
+  Student: 'student2024', // ← change this
+  Tutor:   'tutor2024',   // ← change this
+};
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+/* ══ SUBJECT CONFIG ══ */
+const subjectCfg = {
+  'Math':    {cls:'sc-math',    color:'#2563eb', dot:'#93c5fd'},
+  'English': {cls:'sc-english', color:'#9333ea', dot:'#d8b4fe'},
+  'Science': {cls:'sc-science', color:'#16a34a', dot:'#86efac'},
+  'History': {cls:'sc-history', color:'#ea580c', dot:'#fdba74'},
+  'French':  {cls:'sc-french',  color:'#e11d48', dot:'#fda4af'},
+  'Geo':     {cls:'sc-geo',     color:'#ca8a04', dot:'#fde68a'},
+  'General': {cls:'sc-general', color:'#475569', dot:'#cbd5e1'},
+};
+
+/* ══ STATE ══ */
+let userRole = 'Student';
+let activeSubject = 'All';
+let viewMode = 'grid';
+let navView = 'all';
+let allWorksheets = []; // loaded from Supabase
+
+/* ══ LOGIN ══ */
+function selectRole(btn, role) {
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  userRole = role;
+}
+
+function attemptLogin() {
+  const val = document.getElementById('passcode-input').value.trim();
+  const err = document.getElementById('error-bar');
+  // Determine role from whichever passcode matches — ignores the role button selection
+  const matchedRole = Object.keys(PASSCODES).find(role => PASSCODES[role] === val);
+  if (matchedRole) {
+    userRole = matchedRole;
+    // Sync the role button UI to match
+    document.querySelectorAll('.role-btn').forEach(b => {
+      b.classList.toggle('selected', b.querySelector('.role-label').textContent === matchedRole);
+    });
+    err.classList.remove('show');
+    document.getElementById('login-page').classList.remove('active');
+    document.getElementById('app-page').classList.add('active');
+    initApp();
+  } else {
+    err.classList.add('show');
+    document.getElementById('passcode-input').value = '';
+    document.getElementById('passcode-input').focus();
+  }
+}
+
+document.getElementById('passcode-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') attemptLogin();
+});
+
+function logout() {
+  document.getElementById('app-page').classList.remove('active');
+  document.getElementById('login-page').classList.add('active');
+  document.getElementById('passcode-input').value = '';
+  document.getElementById('search-input').value = '';
+  activeSubject = 'All'; navView = 'all'; allWorksheets = [];
+}
+
+/* ══ INIT ══ */
+async function initApp() {
+  const isTutor = userRole === 'Tutor';
+  document.getElementById('role-badge-label').textContent = userRole;
+  document.getElementById('user-role-display').textContent = userRole;
+  document.getElementById('user-avatar').textContent = userRole[0];
+  document.getElementById('stats-row').style.display = isTutor ? 'grid' : 'none';
+  document.getElementById('tutor-notes-block').style.display = isTutor ? 'block' : 'none';
+  document.getElementById('upload-nav-btn').style.display = isTutor ? 'flex' : 'none';
+
+  // show loading
+  document.getElementById('content-area').innerHTML = `
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading worksheets from database…</p>
+    </div>`;
+
+  await loadWorksheets();
+}
+
+/* ══ LOAD FROM SUPABASE ══ */
+async function loadWorksheets() {
+  try {
+    const { data, error } = await sb
+      .from('worksheets')
+      .select('*')
+      .order('date_added', { ascending: false });
+
+    if (error) throw error;
+
+    allWorksheets = (data || []).map(normalise);
+    updateSidebar();
+    if (userRole === 'Tutor') updateStats();
+    renderView();
+  } catch (err) {
+    document.getElementById('content-area').innerHTML = `
+      <div class="loading-state">
+        <div class="es-icon" style="font-size:40px">⚠️</div>
+        <p style="color:#dc2626">Could not load worksheets: ${err.message}</p>
+        <p style="font-size:12px;color:var(--slate)">Check your Supabase table and RLS policies.</p>
+      </div>`;
+  }
+}
+
+/* Normalise DB row to app shape */
+function normalise(row) {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const d = new Date(row.date_added);
+  const emojis = {Math:'📐',English:'✏️',Science:'🔬',History:'🌍',French:'🇫🇷',Geo:'🗺️',General:'📝'};
+  return {
+    id:          row.id,
+    title:       row.title || 'Untitled',
+    subject:     row.subject || 'General',
+    topic:       row.topic || row.subject || 'General',
+    grade:       row.grade || 'All grades',
+    pages:       row.pages || 1,
+    date:        months[d.getMonth()] + ' ' + d.getFullYear(),
+    dateObj:     d,
+    emoji:       emojis[row.subject] || '📄',
+    curriculum:  row.curriculum || 'Ontario',
+    difficulty:  row.difficulty || 'Intermediate',
+    description: row.description || '',
+    tutorNotes:  row.tutor_notes || '',
+    filePath:    row.file_path || null,
+  };
+}
+
+function getPublicUrl(filePath) {
+  if (!filePath) return null;
+  const { data } = sb.storage.from(BUCKET).getPublicUrl(filePath);
+  return data?.publicUrl || null;
+}
+
+/* ══ SIDEBAR ══ */
+function updateSidebar() {
+  document.getElementById('nc-all').textContent = allWorksheets.length;
+  buildSubjectNav();
+  buildGradeNav();
+  buildGradeDropdown();
+  buildSubjectPills();
+}
+
+function buildSubjectNav() {
+  const subjects = ['All', ...new Set(allWorksheets.map(w => w.subject))];
+  document.getElementById('subject-nav').innerHTML = subjects.map(s => {
+    const cfg = subjectCfg[s];
+    const count = s === 'All' ? allWorksheets.length : allWorksheets.filter(w => w.subject === s).length;
+    const dot = cfg
+      ? `<span class="subject-dot" style="background:${cfg.dot}"></span>`
+      : `<span class="subject-dot" style="background:var(--teal-lt)"></span>`;
+    return `<button class="nav-item" onclick="setSidebarSubject('${s}',this)">
+      <span class="ni-icon">${dot}</span> ${s} <span class="nav-count">${count}</span>
+    </button>`;
+  }).join('');
+}
+
+function buildGradeNav() {
+  const grades = [...new Set(allWorksheets.map(w => w.grade))].sort();
+  document.getElementById('grade-nav').innerHTML = grades.map(g => {
+    const count = allWorksheets.filter(w => w.grade === g).length;
+    return `<button class="nav-item" onclick="setSidebarGrade('${g}',this)" style="font-size:12.5px">
+      <span class="ni-icon">🏷</span> ${g} <span class="nav-count">${count}</span>
+    </button>`;
+  }).join('');
+}
+
+function buildGradeDropdown() {
+  const grades = ['All', ...[...new Set(allWorksheets.map(w => w.grade))].sort()];
+  document.getElementById('grade-filter').innerHTML = grades
+    .map(g => `<option value="${g}">${g === 'All' ? 'All grades' : g}</option>`)
+    .join('');
+}
+
+function buildSubjectPills() {
+  const subjects = ['All', ...new Set(allWorksheets.map(w => w.subject))];
+  document.getElementById('subject-pills').innerHTML = subjects
+    .map(s => `<button class="pill ${s === activeSubject ? 'active' : ''}" onclick="setSubjectFilter('${s}')">${s}</button>`)
+    .join('');
+}
+
+/* ══ STATS ══ */
+function updateStats() {
+  const now = new Date();
+  const thisMonth = allWorksheets.filter(w => {
+    return w.dateObj.getMonth() === now.getMonth() && w.dateObj.getFullYear() === now.getFullYear();
+  }).length;
+  document.getElementById('stat-total').textContent    = allWorksheets.length;
+  document.getElementById('stat-subjects').textContent = new Set(allWorksheets.map(w => w.subject)).size;
+  document.getElementById('stat-grades').textContent   = new Set(allWorksheets.map(w => w.grade)).size;
+  document.getElementById('stat-new').textContent      = thisMonth;
+}
+
+/* ══ NAVIGATION ══ */
+function setNavView(view, btn) {
+  navView = view; activeSubject = 'All';
+  document.querySelectorAll('.sidebar .nav-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  buildSubjectPills();
+  document.getElementById('grade-filter').value = 'All';
+  const titles = {all:'All Worksheets', recent:'Recent Additions', upload:'Upload Worksheet'};
+  const subs   = {all:'Browse the full PTD library', recent:'Worksheets added in the last 30 days', upload:'Add a new worksheet to the PTD library'};
+  document.getElementById('view-title').textContent    = titles[view] || 'Library';
+  document.getElementById('view-subtitle').textContent = subs[view]  || '';
+  const isUpload = view === 'upload';
+  document.getElementById('filter-bar').style.display    = isUpload ? 'none' : 'flex';
+  document.getElementById('view-controls').style.display = isUpload ? 'none' : 'flex';
+  renderView();
+}
+
+function setSidebarSubject(subject, btn) {
+  navView = 'all'; activeSubject = subject;
+  document.querySelectorAll('.sidebar .nav-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active'); buildSubjectPills();
+  document.getElementById('view-title').textContent    = subject === 'All' ? 'All Worksheets' : subject;
+  document.getElementById('view-subtitle').textContent = subject === 'All' ? 'Browse the full PTD library' : `All ${subject} worksheets`;
+  document.getElementById('filter-bar').style.display    = 'flex';
+  document.getElementById('view-controls').style.display = 'flex';
+  renderView();
+}
+
+function setSidebarGrade(grade, btn) {
+  navView = 'all'; activeSubject = 'All';
+  document.querySelectorAll('.sidebar .nav-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active'); buildSubjectPills();
+  document.getElementById('grade-filter').value = grade;
+  document.getElementById('view-title').textContent    = grade;
+  document.getElementById('view-subtitle').textContent = `All worksheets for ${grade}`;
+  document.getElementById('filter-bar').style.display    = 'flex';
+  document.getElementById('view-controls').style.display = 'flex';
+  renderView();
+}
+
+function setSubjectFilter(s) { activeSubject = s; buildSubjectPills(); renderView(); }
+
+function setViewMode(mode) {
+  viewMode = mode;
+  document.getElementById('vt-grid').classList.toggle('active', mode === 'grid');
+  document.getElementById('vt-list').classList.toggle('active', mode === 'list');
+  renderView();
+}
+
+/* ══ FILTER & SORT ══ */
+function getFiltered() {
+  const query = document.getElementById('search-input').value.toLowerCase();
+  const grade = document.getElementById('grade-filter').value;
+  const sort  = document.getElementById('sort-select').value;
+
+  let items = [...allWorksheets];
+  if (navView === 'recent') {
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
+    items = items.filter(w => w.dateObj >= cutoff);
+  }
+  if (activeSubject !== 'All') items = items.filter(w => w.subject === activeSubject);
+  if (grade !== 'All')         items = items.filter(w => w.grade === grade);
+  if (query) items = items.filter(w =>
+    w.title.toLowerCase().includes(query) ||
+    w.subject.toLowerCase().includes(query) ||
+    w.topic.toLowerCase().includes(query) ||
+    w.grade.toLowerCase().includes(query) ||
+    w.description.toLowerCase().includes(query)
+  );
+  if (sort === 'newest')    items.sort((a,b) => b.dateObj - a.dateObj);
+  if (sort === 'az')        items.sort((a,b) => a.title.localeCompare(b.title));
+  if (sort === 'za')        items.sort((a,b) => b.title.localeCompare(a.title));
+  if (sort === 'pages-asc') items.sort((a,b) => a.pages - b.pages);
+  return items;
+}
+
+/* ══ RENDER ══ */
+function renderView() {
+  const area = document.getElementById('content-area');
+  if (navView === 'upload') { renderUploadPanel(area); return; }
+  const items = getFiltered();
+  document.getElementById('result-info').innerHTML = `<strong>${items.length}</strong> of ${allWorksheets.length} results`;
+  viewMode === 'grid' ? renderGrid(items, area) : renderList(items, area);
+}
+
+function renderGrid(items, area) {
+  if (!items.length) {
+    area.innerHTML = `<div class="worksheet-grid"><div class="empty-state"><div class="es-icon">🔍</div><h3>No results found</h3><p>Try adjusting your search or filters.</p></div></div>`;
+    return;
+  }
+  area.innerHTML = `<div class="worksheet-grid">${items.map(cardHTML).join('')}</div>`;
+}
+
+function cardHTML(w) {
+  const cfg = subjectCfg[w.subject] || subjectCfg['General'];
+  return `<div class="ws-card" onclick="openModal('${w.id}')">
+    <div class="card-accent" style="background:${cfg.color}"></div>
+    <div class="card-body">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span class="card-subject-tag ${cfg.cls}">${w.subject}</span>
+        <span style="font-size:11px;color:var(--slate)">${w.date}</span>
+      </div>
+      <div class="card-title">${w.title}</div>
+      <div class="card-meta">
+        <span class="meta-tag">📌 ${w.topic}</span>
+        <span class="meta-tag">🎓 ${w.grade}</span>
+        <span class="meta-tag">📄 ${w.pages}p</span>
+        <span class="meta-tag">${w.difficulty}</span>
+      </div>
+      <div class="card-actions">
+        <button class="btn-sm btn-ghost" style="border:1.5px solid var(--border)" onclick="event.stopPropagation();openModal('${w.id}')">👁 Preview</button>
+        <button class="btn-sm btn-teal" onclick="event.stopPropagation();downloadFile('${w.id}')">⬇ PDF</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderList(items, area) {
+  if (!items.length) {
+    area.innerHTML = `<div style="padding:28px"><div class="empty-state"><div class="es-icon">🔍</div><h3>No results found</h3><p>Try adjusting your search or filters.</p></div></div>`;
+    return;
+  }
+  const rows = items.map(w => {
+    const cfg = subjectCfg[w.subject] || subjectCfg['General'];
+    return `<div class="list-row" onclick="openModal('${w.id}')">
+      <div class="list-title-cell">
+        <div class="list-emoji ${cfg.cls}">${w.emoji}</div>
+        <div><div class="list-title">${w.title}</div><div class="list-topic">${w.topic}</div></div>
+      </div>
+      <div><span class="list-badge ${cfg.cls}">${w.subject}</span></div>
+      <div class="lr-grade list-grade">${w.grade}</div>
+      <div class="lr-pages list-pages">${w.pages} pages</div>
+      <div class="list-actions">
+        <button class="btn-sm btn-ghost" style="border:1.5px solid var(--border);padding:6px 10px;font-size:12px" onclick="event.stopPropagation();openModal('${w.id}')">👁</button>
+        <button class="btn-sm btn-teal" style="padding:6px 10px;font-size:12px" onclick="event.stopPropagation();downloadFile('${w.id}')">⬇</button>
+      </div>
+    </div>`;
+  }).join('');
+  area.innerHTML = `<div class="worksheet-list">
+    <div class="list-header"><div>Worksheet</div><div>Subject</div><div class="lh-grade">Grade</div><div class="lh-pages">Pages</div><div>Actions</div></div>
+    ${rows}
+  </div>`;
+}
+
+/* ══ FILE ACTIONS ══ */
+function downloadFile(id) {
+  const w = allWorksheets.find(x => x.id === id);
+  if (!w || !w.filePath) { alert('No file linked to this worksheet yet.'); return; }
+  const url = getPublicUrl(w.filePath);
+  if (url) window.open(url, '_blank');
+}
+
+/* ══ MODAL ══ */
+let currentModalId = null;
+
+function openModal(id) {
+  const w = allWorksheets.find(x => x.id === id);
+  if (!w) return;
+  currentModalId = id;
+  const cfg = subjectCfg[w.subject] || subjectCfg['General'];
+  document.getElementById('modal-banner').style.background = cfg.color;
+  document.getElementById('modal-stag').textContent  = w.subject + ' · ' + w.topic;
+  document.getElementById('modal-stag').className    = `modal-subject-tag ${cfg.cls}`;
+  document.getElementById('modal-title').textContent = w.title;
+  document.getElementById('mi-grade').textContent    = w.grade;
+  document.getElementById('mi-pages').textContent    = w.pages + ' pages';
+  document.getElementById('mi-date').textContent     = w.date;
+  document.getElementById('mi-topic').textContent    = w.topic;
+  document.getElementById('mi-curriculum').textContent = w.curriculum;
+  document.getElementById('mi-diff').textContent     = w.difficulty;
+  document.getElementById('mi-desc').textContent     = w.description || 'No description provided.';
+  document.getElementById('mi-notes').textContent    = w.tutorNotes  || 'No tutor notes added.';
+
+  const url = w.filePath ? getPublicUrl(w.filePath) : null;
+  const previewBtn  = document.getElementById('modal-preview-btn');
+  const downloadBtn = document.getElementById('modal-download-btn');
+  if (url) {
+    previewBtn.onclick  = () => window.open(url, '_blank');
+    downloadBtn.onclick = () => window.open(url, '_blank');
+    previewBtn.style.opacity  = '1';
+    downloadBtn.style.opacity = '1';
+  } else {
+    previewBtn.onclick  = () => alert('No PDF file linked to this worksheet.');
+    downloadBtn.onclick = () => alert('No PDF file linked to this worksheet.');
+    previewBtn.style.opacity  = '0.5';
+    downloadBtn.style.opacity = '0.5';
+  }
+
+  document.getElementById('modal-bg').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal-bg').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function handleModalBgClick(e) {
+  if (e.target === document.getElementById('modal-bg')) closeModal();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* ══ UPLOAD PANEL ══ */
+function renderUploadPanel(area) {
+  area.innerHTML = `
+  <div class="upload-panel">
+    <div class="upload-form">
+      <div class="upload-success" id="upload-success">✅ Worksheet uploaded and added to the library!</div>
+      <div class="upload-error" id="upload-error"></div>
+
+      <div class="up-section">
+        <div class="up-section-title">📄 PDF File</div>
+        <div class="drop-zone" id="drop-zone">
+          <input type="file" accept=".pdf" id="pdf-input" onchange="onFileChosen(this)">
+          <div class="drop-icon">📂</div>
+          <div class="drop-label">Drop your PDF here, or click to browse</div>
+          <div class="drop-sub">Accepts .pdf files only · Max 50 MB</div>
+          <div class="drop-chosen" id="drop-chosen"></div>
+        </div>
+        <div class="progress-bar-wrap" id="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+      </div>
+
+      <div class="up-section">
+        <div class="up-section-title">📝 Worksheet Details</div>
+        <div class="up-grid">
+          <div class="up-field full">
+            <label>Title</label>
+            <input type="text" id="up-title" placeholder="e.g. Quadratics & Factoring">
+          </div>
+          <div class="up-field">
+            <label>Subject</label>
+            <select id="up-subject">
+              <option value="">Select subject…</option>
+              <option>Math</option><option>English</option><option>Science</option>
+              <option>History</option><option>French</option><option>Geo</option><option>General</option>
+            </select>
+          </div>
+          <div class="up-field">
+            <label>Topic</label>
+            <input type="text" id="up-topic" placeholder="e.g. Algebra">
+          </div>
+          <div class="up-field">
+            <label>Grade Level</label>
+            <select id="up-grade">
+              <option value="">Select grade…</option>
+              <option>Grade 6</option><option>Grade 7</option><option>Grade 8</option>
+              <option>Grade 9</option><option>Grade 10</option><option>Grade 11</option>
+              <option>Grade 12</option><option>All grades</option>
+            </select>
+          </div>
+          <div class="up-field">
+            <label>Difficulty</label>
+            <select id="up-diff">
+              <option value="">Select difficulty…</option>
+              <option>Beginner</option><option>Intermediate</option><option>Advanced</option>
+            </select>
+          </div>
+          <div class="up-field">
+            <label>Number of Pages</label>
+            <input type="number" id="up-pages" placeholder="e.g. 4" min="1">
+          </div>
+          <div class="up-field">
+            <label>Curriculum</label>
+            <input type="text" id="up-curriculum" placeholder="e.g. Ontario" value="Ontario">
+          </div>
+          <div class="up-field full">
+            <label>Description</label>
+            <textarea id="up-desc" placeholder="Brief description of what this worksheet covers…"></textarea>
+          </div>
+          <div class="up-field full">
+            <label>Tutor Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--slate)">(only visible to tutors)</span></label>
+            <textarea id="up-notes" placeholder="Tips, common mistakes, how to use this sheet…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="up-actions">
+        <button class="btn-upload" id="submit-btn" onclick="submitUpload()">⬆ Add to Library</button>
+        <button class="btn-upload-ghost" onclick="clearUploadForm()">Clear form</button>
+      </div>
+    </div>
+  </div>`;
+
+  const dz = document.getElementById('drop-zone');
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', ()  => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') {
+      document.getElementById('pdf-input').files = e.dataTransfer.files;
+      showChosen(f.name);
+    }
+  });
+}
+
+function onFileChosen(inp) {
+  if (inp.files[0]) showChosen(inp.files[0].name);
+}
+
+function showChosen(name) {
+  const el = document.getElementById('drop-chosen');
+  if (el) { el.textContent = '📎 ' + name; el.style.display = 'block'; }
+}
+
+async function submitUpload() {
+  const title  = document.getElementById('up-title').value.trim();
+  const subject = document.getElementById('up-subject').value;
+  const topic   = document.getElementById('up-topic').value.trim();
+  const grade   = document.getElementById('up-grade').value;
+  const diff    = document.getElementById('up-diff').value;
+  const pages   = parseInt(document.getElementById('up-pages').value) || 1;
+  const curr    = document.getElementById('up-curriculum').value.trim() || 'Ontario';
+  const desc    = document.getElementById('up-desc').value.trim();
+  const notes   = document.getElementById('up-notes').value.trim();
+  const fileInput = document.getElementById('pdf-input');
+  const file    = fileInput?.files[0];
+
+  const errEl = document.getElementById('upload-error');
+  errEl.classList.remove('show');
+
+  if (!title || !subject || !grade) {
+    errEl.textContent = 'Please fill in Title, Subject, and Grade before uploading.';
+    errEl.classList.add('show'); return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Uploading…';
+
+  try {
+    let filePath = null;
+
+    // 1. Upload PDF to Supabase Storage
+    if (file) {
+      setProgress(20);
+      const ext      = file.name.split('.').pop();
+      const safeName = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      filePath       = `${Date.now()}_${safeName}.${ext}`;
+
+      const { error: storageErr } = await sb.storage
+        .from(BUCKET)
+        .upload(filePath, file, { contentType: 'application/pdf', upsert: false });
+
+      if (storageErr) throw new Error('Storage error: ' + storageErr.message);
+      setProgress(60);
+    }
+
+    // 2. Insert metadata into worksheets table
+    const { error: dbErr } = await sb.from('worksheets').insert({
+      title, subject,
+      topic:        topic || subject,
+      grade,
+      difficulty:   diff || 'Intermediate',
+      pages,
+      curriculum:   curr,
+      description:  desc,
+      tutor_notes:  notes,
+      file_path:    filePath,
+    });
+
+    if (dbErr) throw new Error('Database error: ' + dbErr.message);
+    setProgress(100);
+
+    // 3. Reload library
+    await loadWorksheets();
+
+    // 4. Show success
+    const suc = document.getElementById('upload-success');
+    if (suc) { suc.classList.add('show'); setTimeout(() => suc.classList.remove('show'), 5000); }
+    clearUploadForm();
+
+  } catch (err) {
+    errEl.textContent = '❌ Upload failed: ' + err.message;
+    errEl.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '⬆ Add to Library';
+    setTimeout(() => setProgress(0), 1000);
+  }
+}
+
+function setProgress(pct) {
+  const wrap = document.getElementById('progress-wrap');
+  const bar  = document.getElementById('progress-bar');
+  if (!wrap || !bar) return;
+  wrap.classList.toggle('show', pct > 0);
+  bar.style.width = pct + '%';
+}
+
+function clearUploadForm() {
+  ['up-title','up-topic','up-pages','up-desc','up-notes'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const curr = document.getElementById('up-curriculum'); if (curr) curr.value = 'Ontario';
+  ['up-subject','up-grade','up-diff'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.selectedIndex = 0;
+  });
+  const fi = document.getElementById('pdf-input'); if (fi) fi.value = '';
+  const dc = document.getElementById('drop-chosen');
+  if (dc) { dc.textContent = ''; dc.style.display = 'none'; }
+  setProgress(0);
+}
+</script>
+</body>
+</html>
