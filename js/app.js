@@ -4,18 +4,18 @@
 // =============================================================
 
 
-// ── Config ────────────────────────────────────────────────────
+// ── Config 
 
 const SUPABASE_URL  = 'https://zpljfpfajhykjdglktil.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwbGpmcGZhamh5a2pkZ2xrdGlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMjYwODQsImV4cCI6MjA4OTcwMjA4NH0.rFIiKNagw3qXQ1Tq4niYPhLuGyzU7ayFkC_MtpYrZzo';
 const BUCKET        = 'worksheets';
-const INVITE_CODE   = 'PTD-2025';   // ← share this with anyone you want to give access
+const INVITE_CODE   = 'PTD-2025';   
 
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 
-// ── Subject colours ───────────────────────────────────────────
+// ── Subject colours 
 
 const subjectCfg = {
   Math:    { cls: 'sc-math',    color: '#2563eb', dot: '#93c5fd' },
@@ -28,7 +28,7 @@ const subjectCfg = {
 };
 
 
-// ── App state ─────────────────────────────────────────────────
+// ── App state 
 
 let activeSubject = 'All';
 let viewMode      = 'grid';
@@ -36,7 +36,7 @@ let navView       = 'all';
 let allWorksheets = [];
 
 
-// ── Auth ──────────────────────────────────────────────────────
+// ── Auth 
 
 // Check if the user is already logged in when the page loads.
 // If they are, skip the login screen and go straight to the app.
@@ -191,7 +191,7 @@ async function handleLogout() {
 }
 
 
-// ── Enter key support ─────────────────────────────────────────
+// ── Enter key support 
 
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
@@ -204,16 +204,16 @@ document.addEventListener('keydown', e => {
 });
 
 
-// ── App initialisation ────────────────────────────────────────
+// ── App initialisation 
 
 function showApp(user) {
   document.getElementById('login-page').classList.remove('active');
   document.getElementById('app-page').classList.add('active');
 
   const initial = user.email[0].toUpperCase();
-  document.getElementById('user-avatar').textContent        = initial;
+  document.getElementById('user-avatar').textContent = initial;
   document.getElementById('user-email-display').textContent = user.email;
-  document.getElementById('topbar-user-badge').innerHTML    = `
+  document.getElementById('topbar-user-badge').innerHTML = `
     <div class="topbar-user-dot"></div>
     ${user.email}
   `;
@@ -229,7 +229,7 @@ function showApp(user) {
 }
 
 
-// ── Data loading ──────────────────────────────────────────────
+// ── Data loading
 
 async function loadWorksheets() {
   try {
@@ -285,7 +285,7 @@ function getPublicUrl(filePath) {
 }
 
 
-// ── Sidebar ───────────────────────────────────────────────────
+// ── Sidebar
 
 function updateSidebar() {
   document.getElementById('nc-all').textContent = allWorksheets.length;
@@ -343,7 +343,7 @@ function buildSubjectPills() {
 }
 
 
-// ── Stats ─────────────────────────────────────────────────────
+// ── Stats 
 
 function updateStats() {
   const now       = new Date();
@@ -359,7 +359,7 @@ function updateStats() {
 }
 
 
-// ── Navigation ────────────────────────────────────────────────
+// ── Navigation 
 
 function setNavView(view, btn) {
   navView       = view;
@@ -430,7 +430,7 @@ function setViewMode(mode) {
 }
 
 
-// ── Filtering & sorting ───────────────────────────────────────
+// ── Filtering & sorting 
 
 function getFiltered() {
   const query = document.getElementById('search-input').value.toLowerCase();
@@ -578,7 +578,7 @@ function renderList(items, area) {
 }
 
 
-// ── File download ─────────────────────────────────────────────
+// ── File download 
 
 function downloadFile(id) {
   const w = allWorksheets.find(x => x.id === id);
@@ -591,7 +591,7 @@ function downloadFile(id) {
 }
 
 
-// ── Modal ─────────────────────────────────────────────────────
+// ── Modal 
 
 function openModal(id) {
   const w = allWorksheets.find(x => x.id === id);
