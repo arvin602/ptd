@@ -10,6 +10,7 @@
 </head>
 <body>
 
+  <!-- Login page -->
   <div id="login-page" class="page active">
     <div class="login-panel">
       <div class="login-panel-top">
@@ -24,7 +25,7 @@
           <div class="chip"><div class="chip-icon">🗂️</div> Browse by subject, grade &amp; topic</div>
           <div class="chip"><div class="chip-icon">🔍</div> Full-text search across all materials</div>
           <div class="chip"><div class="chip-icon">⬇️</div> One-click PDF preview &amp; download</div>
-          <div class="chip"><div class="chip-icon">☁️</div> Cloud storage — always up to date</div>
+          <div class="chip"><div class="chip-icon">🔒</div> Secure accounts — your data stays private</div>
         </div>
       </div>
       <div class="login-panel-bottom">
@@ -37,31 +38,95 @@
 
     <div class="login-form-wrap">
       <div class="login-form-inner">
-        <div class="form-eyebrow">Welcome back</div>
-        <h2>Sign in to PTD</h2>
-        <p class="form-desc">Select your role and enter your access code to continue.</p>
-        <div class="role-selector">
-          <button class="role-btn selected" onclick="selectRole(this, 'Student')">
-            <span class="role-icon">🎓</span>
-            <span class="role-label">Student</span>
+
+        <!-- Tab switcher -->
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+          <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Create Account</button>
+        </div>
+
+        <!-- Sign in form -->
+        <div id="form-login">
+          <h2>Welcome back</h2>
+          <p class="form-desc">Sign in to access the PTD library.</p>
+
+          <label class="field-label">Email</label>
+          <div class="field-wrap">
+            <input type="email" id="login-email" placeholder="you@email.com" autocomplete="email" />
+          </div>
+
+          <label class="field-label">Password</label>
+          <div class="field-wrap">
+            <input type="password" id="login-password" placeholder="Your password" autocomplete="current-password" />
+          </div>
+
+          <div class="error-bar" id="login-error"></div>
+
+          <button class="btn-enter" onclick="handleLogin()">
+            Sign In <span>→</span>
           </button>
-          <button class="role-btn" onclick="selectRole(this, 'Tutor')">
-            <span class="role-icon">📚</span>
-            <span class="role-label">Tutor</span>
+
+          <div class="auth-link" onclick="switchTab('forgot')">Forgot your password?</div>
+        </div>
+
+        <!-- Sign up form -->
+        <div id="form-signup" style="display: none">
+          <h2>Create account</h2>
+          <p class="form-desc">You'll need an invite code to register.</p>
+
+          <label class="field-label">Invite Code</label>
+          <div class="field-wrap">
+            <input type="text" id="signup-code" placeholder="Enter your invite code" autocomplete="off" />
+          </div>
+
+          <label class="field-label">Email</label>
+          <div class="field-wrap">
+            <input type="email" id="signup-email" placeholder="you@email.com" autocomplete="email" />
+          </div>
+
+          <label class="field-label">Password</label>
+          <div class="field-wrap">
+            <input type="password" id="signup-password" placeholder="Choose a password (min 6 chars)" autocomplete="new-password" />
+          </div>
+
+          <div class="error-bar" id="signup-error"></div>
+          <div class="success-bar" id="signup-success"></div>
+
+          <button class="btn-enter" onclick="handleSignup()">
+            Create Account <span>→</span>
           </button>
         </div>
-        <label class="field-label">Access Code</label>
-        <div class="field-wrap">
-          <input type="password" id="passcode-input" placeholder="Enter your passcode…" autocomplete="off" />
+
+        <!-- Forgot password form -->
+        <div id="form-forgot" style="display: none">
+          <h2>Reset password</h2>
+          <p class="form-desc">Enter your email and we'll send you a reset link.</p>
+
+          <label class="field-label">Email</label>
+          <div class="field-wrap">
+            <input type="email" id="forgot-email" placeholder="you@email.com" />
+          </div>
+
+          <div class="error-bar" id="forgot-error"></div>
+          <div class="success-bar" id="forgot-success"></div>
+
+          <button class="btn-enter" onclick="handleForgotPassword()">
+            Send Reset Link <span>→</span>
+          </button>
+
+          <div class="auth-link" onclick="switchTab('login')">← Back to sign in</div>
         </div>
-        <div class="error-bar" id="error-bar">Incorrect access code. Please try again.</div>
-        <button class="btn-enter" onclick="attemptLogin()">Enter PTD <span>→</span></button>
-        <div class="login-note">Don't have a code? Contact <strong>Prem Tutoring</strong> to get access.</div>
+
+        <div class="login-note">
+          Don't have an invite code? Contact <strong>Prem Tutoring</strong> to get access.
+        </div>
+
       </div>
     </div>
   </div>
 
 
+  <!-- App page -->
   <div id="app-page" class="page">
     <div class="topbar">
       <div class="topbar-logo">PTD<span></span></div>
@@ -70,10 +135,7 @@
         <input type="text" id="search-input" placeholder="Search worksheets, topics, grades…" oninput="renderView()" />
       </div>
       <div class="topbar-right">
-        <div class="topbar-role-badge">
-          <div class="role-indicator"></div>
-          <span id="role-badge-label">Student</span>
-        </div>
+        <div class="topbar-user-badge" id="topbar-user-badge"></div>
       </div>
     </div>
 
@@ -88,7 +150,7 @@
           <button class="nav-item" onclick="setNavView('recent', this)">
             <span class="ni-icon">🕐</span> Recent Additions
           </button>
-          <button class="nav-item" id="upload-nav-btn" onclick="setNavView('upload', this)" style="display: none">
+          <button class="nav-item" onclick="setNavView('upload', this)">
             <span class="ni-icon">⬆️</span> Upload Worksheet
           </button>
         </div>
@@ -104,18 +166,18 @@
         </div>
         <div class="sidebar-bottom">
           <div class="user-chip">
-            <div class="user-avatar" id="user-avatar">S</div>
+            <div class="user-avatar" id="user-avatar">—</div>
             <div class="user-info">
-              <div class="user-role" id="user-role-display">Student</div>
+              <div class="user-email" id="user-email-display">—</div>
               <div class="user-name">Prem Tutoring</div>
             </div>
           </div>
-          <button class="btn-signout" onclick="logout()">Sign out</button>
+          <button class="btn-signout" onclick="handleLogout()">Sign out</button>
         </div>
       </div>
 
       <div class="main-content">
-        <div class="stats-row" id="stats-row" style="display: none">
+        <div class="stats-row" id="stats-row">
           <div class="stat-card">
             <div class="stat-icon">📄</div>
             <div class="stat-text">
@@ -180,6 +242,7 @@
   </div>
 
 
+  <!-- Modal -->
   <div class="modal-bg" id="modal-bg" onclick="handleModalBgClick(event)">
     <div class="modal">
       <div class="modal-banner" id="modal-banner"></div>
@@ -198,7 +261,7 @@
           <div class="info-box"><label>Difficulty</label><span id="mi-diff"></span></div>
         </div>
         <p class="modal-desc" id="mi-desc"></p>
-        <div class="tutor-notes" id="tutor-notes-block">
+        <div class="tutor-notes">
           <div class="tutor-notes-header">📌 Tutor Notes</div>
           <p id="mi-notes"></p>
         </div>

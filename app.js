@@ -1,6 +1,6 @@
 // =============================================================
 // app.js — PTD core logic
-// Config, state, login, data loading, rendering
+// Config, auth, data loading, rendering
 // =============================================================
 
 
@@ -9,11 +9,7 @@
 const SUPABASE_URL  = 'https://zpljfpfajhykjdglktil.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwbGpmcGZhamh5a2pkZ2xrdGlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMjYwODQsImV4cCI6MjA4OTcwMjA4NH0.rFIiKNagw3qXQ1Tq4niYPhLuGyzU7ayFkC_MtpYrZzo';
 const BUCKET        = 'worksheets';
-
-const PASSCODES = {
-  Student: 'student2024',   // ← change this
-  Tutor:   'tutor2024',     // ← change this
-};
+const INVITE_CODE   = 'PTD-2025';   // ← share this with anyone you want to give access
 
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -34,81 +30,202 @@ const subjectCfg = {
 
 // ── App state ─────────────────────────────────────────────────
 
-let userRole      = 'Student';
 let activeSubject = 'All';
 let viewMode      = 'grid';
 let navView       = 'all';
 let allWorksheets = [];
 
 
-// ── Login ─────────────────────────────────────────────────────
+// ── Auth ──────────────────────────────────────────────────────
 
-function selectRole(btn, role) {
-  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-  userRole = role;
-}
-
-function attemptLogin() {
-  const val = document.getElementById('passcode-input').value.trim();
-  const err = document.getElementById('error-bar');
-
-  const matchedRole = Object.keys(PASSCODES).find(role => PASSCODES[role] === val);
-
-  if (matchedRole) {
-    userRole = matchedRole;
-
-    document.querySelectorAll('.role-btn').forEach(b => {
-      b.classList.toggle('selected', b.querySelector('.role-label').textContent === matchedRole);
-    });
-
-    err.classList.remove('show');
-    document.getElementById('login-page').classList.remove('active');
-    document.getElementById('app-page').classList.add('active');
-    initApp();
-  } else {
-    err.classList.add('show');
-    document.getElementById('passcode-input').value = '';
-    document.getElementById('passcode-input').focus();
+// Check if the user is already logged in when the page loads.
+// If they are, skip the login screen and go straight to the app.
+window.addEventListener('load', async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    showApp(session.user);
   }
-}
-
-document.getElementById('passcode-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') attemptLogin();
 });
 
-function logout() {
+function switchTab(tab) {
+  document.getElementById('form-login').style.display  = tab === 'login'  ? 'block' : 'none';
+  document.getElementById('form-signup').style.display = tab === 'signup' ? 'block' : 'none';
+  document.getElementById('form-forgot').style.display = tab === 'forgot' ? 'block' : 'none';
+
+  document.getElementById('tab-login').classList.toggle('active',  tab === 'login');
+  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+
+  clearAuthMessages();
+}
+
+function clearAuthMessages() {
+  ['login-error', 'signup-error', 'signup-success', 'forgot-error', 'forgot-success'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.classList.remove('show'); el.textContent = ''; }
+  });
+}
+
+function showError(id, message) {
+  const el = document.getElementById(id);
+  el.textContent = message;
+  el.classList.add('show');
+}
+
+function showSuccess(id, message) {
+  const el = document.getElementById(id);
+  el.textContent = message;
+  el.classList.add('show');
+}
+
+async function handleLogin() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+
+  clearAuthMessages();
+
+  if (!email || !password) {
+    showError('login-error', 'Please enter your email and password.');
+    return;
+  }
+
+  const btn = document.querySelector('#form-login .btn-enter');
+  btn.disabled    = true;
+  btn.textContent = 'Signing in…';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+  btn.disabled = false;
+  btn.innerHTML = 'Sign In <span>→</span>';
+
+  if (error) {
+    showError('login-error', 'Incorrect email or password. Please try again.');
+    return;
+  }
+
+  showApp(data.user);
+}
+
+async function handleSignup() {
+  const code     = document.getElementById('signup-code').value.trim();
+  const email    = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+
+  clearAuthMessages();
+
+  if (code !== INVITE_CODE) {
+    showError('signup-error', 'Invalid invite code. Contact Prem Tutoring to get access.');
+    return;
+  }
+
+  if (!email || !password) {
+    showError('signup-error', 'Please fill in all fields.');
+    return;
+  }
+
+  if (password.length < 6) {
+    showError('signup-error', 'Password must be at least 6 characters.');
+    return;
+  }
+
+  const btn = document.querySelector('#form-signup .btn-enter');
+  btn.disabled    = true;
+  btn.textContent = 'Creating account…';
+
+  const { error } = await sb.auth.signUp({ email, password });
+
+  btn.disabled = false;
+  btn.innerHTML = 'Create Account <span>→</span>';
+
+  if (error) {
+    showError('signup-error', error.message);
+    return;
+  }
+
+  showSuccess('signup-success', 'Account created! Check your email to confirm your address, then sign in.');
+  document.getElementById('signup-code').value     = '';
+  document.getElementById('signup-email').value    = '';
+  document.getElementById('signup-password').value = '';
+}
+
+async function handleForgotPassword() {
+  const email = document.getElementById('forgot-email').value.trim();
+
+  clearAuthMessages();
+
+  if (!email) {
+    showError('forgot-error', 'Please enter your email address.');
+    return;
+  }
+
+  const btn = document.querySelector('#form-forgot .btn-enter');
+  btn.disabled    = true;
+  btn.textContent = 'Sending…';
+
+  const { error } = await sb.auth.resetPasswordForEmail(email);
+
+  btn.disabled = false;
+  btn.innerHTML = 'Send Reset Link <span>→</span>';
+
+  if (error) {
+    showError('forgot-error', error.message);
+    return;
+  }
+
+  showSuccess('forgot-success', 'Reset link sent — check your inbox.');
+}
+
+async function handleLogout() {
+  await sb.auth.signOut();
+
   document.getElementById('app-page').classList.remove('active');
   document.getElementById('login-page').classList.add('active');
-  document.getElementById('passcode-input').value = '';
   document.getElementById('search-input').value = '';
+  document.getElementById('login-email').value    = '';
+  document.getElementById('login-password').value = '';
+
   activeSubject = 'All';
   navView       = 'all';
   allWorksheets = [];
+
+  switchTab('login');
 }
 
 
-// ── Initialise app ────────────────────────────────────────────
+// ── Enter key support ─────────────────────────────────────────
 
-async function initApp() {
-  const isTutor = userRole === 'Tutor';
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const loginVisible  = document.getElementById('form-login').style.display  !== 'none';
+  const signupVisible = document.getElementById('form-signup').style.display !== 'none';
+  const forgotVisible = document.getElementById('form-forgot').style.display !== 'none';
+  if (loginVisible)  handleLogin();
+  if (signupVisible) handleSignup();
+  if (forgotVisible) handleForgotPassword();
+});
 
-  document.getElementById('role-badge-label').textContent  = userRole;
-  document.getElementById('user-role-display').textContent = userRole;
-  document.getElementById('user-avatar').textContent       = userRole[0];
 
-  document.getElementById('stats-row').style.display          = isTutor ? 'grid'  : 'none';
-  document.getElementById('tutor-notes-block').style.display  = isTutor ? 'block' : 'none';
-  document.getElementById('upload-nav-btn').style.display     = isTutor ? 'flex'  : 'none';
+// ── App initialisation ────────────────────────────────────────
+
+function showApp(user) {
+  document.getElementById('login-page').classList.remove('active');
+  document.getElementById('app-page').classList.add('active');
+
+  const initial = user.email[0].toUpperCase();
+  document.getElementById('user-avatar').textContent        = initial;
+  document.getElementById('user-email-display').textContent = user.email;
+  document.getElementById('topbar-user-badge').innerHTML    = `
+    <div class="topbar-user-dot"></div>
+    ${user.email}
+  `;
 
   document.getElementById('content-area').innerHTML = `
     <div class="loading-state">
       <div class="spinner"></div>
-      <p>Loading worksheets from database…</p>
+      <p>Loading worksheets…</p>
     </div>
   `;
 
-  await loadWorksheets();
+  loadWorksheets();
 }
 
 
@@ -125,14 +242,12 @@ async function loadWorksheets() {
 
     allWorksheets = (data || []).map(normaliseRow);
     updateSidebar();
-
-    if (userRole === 'Tutor') updateStats();
-
+    updateStats();
     renderView();
   } catch (err) {
     document.getElementById('content-area').innerHTML = `
       <div class="loading-state">
-        <div class="es-icon" style="font-size: 40px">⚠️</div>
+        <div style="font-size: 40px">⚠️</div>
         <p style="color: #dc2626">Could not load worksheets: ${err.message}</p>
         <p style="font-size: 12px; color: var(--slate)">Check your Supabase table and RLS policies.</p>
       </div>
@@ -141,8 +256,8 @@ async function loadWorksheets() {
 }
 
 function normaliseRow(row) {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const emojis = { Math: '📐', English: '✏️', Science: '🔬', History: '🌍', French: '🇫🇷', Geo: '🗺️', General: '📝' };
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const emojis = { Math:'📐', English:'✏️', Science:'🔬', History:'🌍', French:'🇫🇷', Geo:'🗺️', General:'📝' };
   const d = new Date(row.date_added);
 
   return {
@@ -215,7 +330,6 @@ function buildGradeNav() {
 
 function buildGradeDropdown() {
   const grades = ['All', ...[...new Set(allWorksheets.map(w => w.grade))].sort()];
-
   document.getElementById('grade-filter').innerHTML = grades
     .map(g => `<option value="${g}">${g === 'All' ? 'All grades' : g}</option>`)
     .join('');
@@ -223,14 +337,13 @@ function buildGradeDropdown() {
 
 function buildSubjectPills() {
   const subjects = ['All', ...new Set(allWorksheets.map(w => w.subject))];
-
   document.getElementById('subject-pills').innerHTML = subjects
     .map(s => `<button class="pill ${s === activeSubject ? 'active' : ''}" onclick="setSubjectFilter('${s}')">${s}</button>`)
     .join('');
 }
 
 
-// ── Stats (tutor only) ────────────────────────────────────────
+// ── Stats ─────────────────────────────────────────────────────
 
 function updateStats() {
   const now       = new Date();
@@ -278,8 +391,8 @@ function setSidebarSubject(subject, btn) {
   btn.classList.add('active');
   buildSubjectPills();
 
-  document.getElementById('view-title').textContent    = subject === 'All' ? 'All Worksheets' : subject;
-  document.getElementById('view-subtitle').textContent = subject === 'All' ? 'Browse the full PTD library' : `All ${subject} worksheets`;
+  document.getElementById('view-title').textContent      = subject === 'All' ? 'All Worksheets' : subject;
+  document.getElementById('view-subtitle').textContent   = subject === 'All' ? 'Browse the full PTD library' : `All ${subject} worksheets`;
   document.getElementById('filter-bar').style.display    = 'flex';
   document.getElementById('view-controls').style.display = 'flex';
 
@@ -294,10 +407,10 @@ function setSidebarGrade(grade, btn) {
   btn.classList.add('active');
   buildSubjectPills();
 
-  document.getElementById('grade-filter').value         = grade;
-  document.getElementById('view-title').textContent     = grade;
-  document.getElementById('view-subtitle').textContent  = `All worksheets for ${grade}`;
-  document.getElementById('filter-bar').style.display   = 'flex';
+  document.getElementById('grade-filter').value          = grade;
+  document.getElementById('view-title').textContent      = grade;
+  document.getElementById('view-subtitle').textContent   = `All worksheets for ${grade}`;
+  document.getElementById('filter-bar').style.display    = 'flex';
   document.getElementById('view-controls').style.display = 'flex';
 
   renderView();
@@ -367,11 +480,7 @@ function renderView() {
   const items = getFiltered();
   document.getElementById('result-info').innerHTML = `<strong>${items.length}</strong> of ${allWorksheets.length} results`;
 
-  if (viewMode === 'grid') {
-    renderGrid(items, area);
-  } else {
-    renderList(items, area);
-  }
+  viewMode === 'grid' ? renderGrid(items, area) : renderList(items, area);
 }
 
 function renderGrid(items, area) {
@@ -500,8 +609,8 @@ function openModal(id) {
   document.getElementById('mi-topic').textContent          = w.topic;
   document.getElementById('mi-curriculum').textContent     = w.curriculum;
   document.getElementById('mi-diff').textContent           = w.difficulty;
-  document.getElementById('mi-desc').textContent           = w.description  || 'No description provided.';
-  document.getElementById('mi-notes').textContent          = w.tutorNotes   || 'No tutor notes added.';
+  document.getElementById('mi-desc').textContent           = w.description || 'No description provided.';
+  document.getElementById('mi-notes').textContent          = w.tutorNotes  || 'No tutor notes added.';
 
   const url         = w.filePath ? getPublicUrl(w.filePath) : null;
   const previewBtn  = document.getElementById('modal-preview-btn');

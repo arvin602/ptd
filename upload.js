@@ -1,6 +1,6 @@
 // =============================================================
 // upload.js — PTD upload panel
-// Only runs when a Tutor navigates to the upload view
+// Handles the upload form, file drop, and Supabase storage
 // =============================================================
 
 
@@ -103,12 +103,7 @@ function renderUploadPanel(area) {
             </div>
 
             <div class="up-field full">
-              <label>
-                Tutor Notes
-                <span style="font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 11px; color: var(--slate)">
-                  (only visible to tutors)
-                </span>
-              </label>
+              <label>Tutor Notes</label>
               <textarea id="up-notes" placeholder="Tips, common mistakes, how to use this sheet…"></textarea>
             </div>
 
@@ -154,8 +149,8 @@ function onFileChosen(input) {
 function showChosenFile(name) {
   const el = document.getElementById('drop-chosen');
   if (el) {
-    el.textContent    = '📎 ' + name;
-    el.style.display  = 'block';
+    el.textContent   = '📎 ' + name;
+    el.style.display = 'block';
   }
 }
 
@@ -206,14 +201,14 @@ async function submitUpload() {
     const { error: dbErr } = await sb.from('worksheets').insert({
       title,
       subject,
-      topic:        topic || subject,
+      topic:       topic || subject,
       grade,
-      difficulty:   diff  || 'Intermediate',
+      difficulty:  diff  || 'Intermediate',
       pages,
-      curriculum:   curr,
-      description:  desc,
-      tutor_notes:  notes,
-      file_path:    filePath,
+      curriculum:  curr,
+      description: desc,
+      tutor_notes: notes,
+      file_path:   filePath,
     });
 
     if (dbErr) throw new Error('Database error: ' + dbErr.message);
